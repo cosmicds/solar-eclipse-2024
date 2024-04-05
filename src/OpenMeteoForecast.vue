@@ -118,7 +118,7 @@ export default defineComponent({
 
     location: {
       type: Object as PropType<LocationDeg>,
-      default: () => {return {latitudeDeg: 42, longitudeDeg: -73};},
+      default: () => { return { latitudeDeg: 42, longitudeDeg: -73 }; },
       required: true
     },
 
@@ -157,7 +157,7 @@ export default defineComponent({
   
   computed: {
     openMeteoAPI() {
-      return `https://api.open-meteo.com/v1/${this.openMeteoApi}`;
+      return `https://customer-api.open-meteo.com/v1/${this.openMeteoApi}`;
     },
     
     utcHour() {
@@ -262,12 +262,10 @@ export default defineComponent({
       }
       this.madeCall = true;
       const queryParams = new URLSearchParams(this.parameters);
-      console.log(queryParams);
-      const fullURL = `${this.openMeteoAPI}?${queryParams.toString()}`;
+      const fullURL = `${this.openMeteoAPI}?${queryParams.toString()}&apikey=${process.env.VUE_APP_OPENMETEO_API_KEY}`;
       return fetch(fullURL)
         .then(response => response.json())
         .then(data => {
-          console.log(data);
           this.forecast = data as Forecast;
         })
         .catch(error => {
