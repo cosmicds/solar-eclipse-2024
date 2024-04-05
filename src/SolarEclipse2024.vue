@@ -3446,6 +3446,7 @@ export default defineComponent({
       this.weatherStartTimestamp = this.showAdvancedWeather ? now : null;
       this.weatherInfoStartTimestamp = this.weatherInfoOpen ? now : null;
       this.eclipseTimerStartTimestamp = this.showEclipsePredictionSheet ? now : null;
+      this.forecastInfoStartTimestamp = this.showForecastSheet ? now : null;
     },
 
     sendUpdateData() {
