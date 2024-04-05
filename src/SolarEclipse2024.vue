@@ -1075,14 +1075,16 @@
 
         <div>
           <v-btn
-          class="splash-get-started"
-          @click="closeSplashScreen"
-          :color="accentColor"
-          :density="xSmallSize ? 'compact' : 'default'"
-          size="x-large"
-          variant="elevated"
-          rounded="lg"
-          >Get Started</v-btn>
+            class="splash-get-started"
+            @click="closeSplashScreen"
+            :color="accentColor"
+            :density="xSmallSize ? 'compact' : 'default'"
+            size="x-large"
+            variant="elevated"
+            rounded="lg"
+          >
+            Get Started
+          </v-btn>
         </div>
 
         <div v-if="narrow">
@@ -1532,6 +1534,12 @@
       <div id="tools">
         <span class="tool-container">
           <div style="position: relative">
+            <v-btn
+              :disabled="nowOutsideTimeRange"
+              @click="selectedTime = Math.max(minTime, Math.min(maxTime, Date.now()))"
+            >
+              Now
+            </v-btn>
             <div id="speed-control">
               <icon-button
                 id="reverse-speed"
@@ -2245,10 +2253,11 @@ export default defineComponent({
       
       toggleTrackSun: true,
       
-      times: times, 
-      minTime: minTime,
-      maxTime: maxTime,
+      times,
+      minTime,
+      maxTime,
       millisecondsPerInterval: MILLISECONDS_PER_INTERVAL,
+      nowOutsideTimeRange: false,
       
       accentColor: "#eac402",
       moonColor: "#CFD8DC",
@@ -2340,6 +2349,10 @@ export default defineComponent({
   },
 
   mounted() {  
+
+    setInterval(() => {
+      this.nowOutsideTimeRange = Date.now() < this.minTime || Date.now() > this.maxTime;
+    }, 1000);
 
     if (queryData.latitudeDeg !== undefined && queryData.longitudeDeg !== undefined) {
       this.selectedTimezone = tzlookup(...[queryData.latitudeDeg, queryData.longitudeDeg]);
@@ -2885,6 +2898,7 @@ export default defineComponent({
         this.showNewMobileUI = !value;
       },
     },
+
   },
 
   methods: {
@@ -4208,7 +4222,7 @@ export default defineComponent({
     
     nearTotality(near: boolean, oldNear: boolean) {
       if (near) {
-        this.forceRate =  (Math.abs(this.playbackRate) > 10) && this.playing;
+        this.forceRate = (Math.abs(this.playbackRate) > 10) && this.playing;
       }
       
       // if leaving eclipse reset speed to previous
