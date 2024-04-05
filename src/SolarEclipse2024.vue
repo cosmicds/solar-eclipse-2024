@@ -897,7 +897,9 @@
                 };
                 locationDeg = myLocation;
                 showMyLocationDialog = false;
-                updateSelectedLocationText();
+                if (myLocation.latitudeDeg !== locationDeg.latitudeDeg || myLocation.longitudeDeg !== locationDeg.longitudeDeg) {
+                  updateSelectedLocationText();
+                }
               }"
               @error="(error: GeolocationPositionError) => { 
                 $notify({
