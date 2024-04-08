@@ -895,10 +895,10 @@
                   latitudeDeg: loc.latitude, 
                   longitudeDeg: loc.longitude
                 };
-                locationDeg = myLocation;
                 showMyLocationDialog = false;
                 
                 if (myLocation.latitudeDeg !== locationDeg.latitudeDeg || myLocation.longitudeDeg !== locationDeg.longitudeDeg) {
+                  locationDeg = myLocation;
                   $nextTick(() => {
                     updateSelectedLocationText();
                   });
