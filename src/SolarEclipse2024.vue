@@ -895,10 +895,13 @@
                   latitudeDeg: loc.latitude, 
                   longitudeDeg: loc.longitude
                 };
-                locationDeg = myLocation;
                 showMyLocationDialog = false;
+                
                 if (myLocation.latitudeDeg !== locationDeg.latitudeDeg || myLocation.longitudeDeg !== locationDeg.longitudeDeg) {
-                  updateSelectedLocationText();
+                  locationDeg = myLocation;
+                  $nextTick(() => {
+                    updateSelectedLocationText();
+                  });
                 }
               }"
               @error="(error: GeolocationPositionError) => { 
@@ -1077,14 +1080,16 @@
 
         <div>
           <v-btn
-          class="splash-get-started"
-          @click="closeSplashScreen"
-          :color="accentColor"
-          :density="xSmallSize ? 'compact' : 'default'"
-          size="x-large"
-          variant="elevated"
-          rounded="lg"
-          >Get Started</v-btn>
+            class="splash-get-started"
+            @click="closeSplashScreen"
+            :color="accentColor"
+            :density="xSmallSize ? 'compact' : 'default'"
+            size="x-large"
+            variant="elevated"
+            rounded="lg"
+          >
+            Get Started
+          </v-btn>
         </div>
 
         <div v-if="narrow">
@@ -1096,7 +1101,7 @@
         </div>
         <div v-else>
           <p class="splash-small-text">
-            <v-icon icon="mdi-creation" size="small" class="bullet-icon"></v-icon> New! April 8 weather forecast
+            <v-icon icon="mdi-creation" size="small" class="bullet-icon"></v-icon> New! NOW button, active starting at 6:40am EDT
           </p>
         </div>
 
@@ -1160,7 +1165,7 @@
         <div class="inst-quad bottom-left">
           <div class="inst-arrow"><v-icon  class="the-arrow" :color="accentColor" :size="Math.min($vuetify.display.width*0.16,$vuetify.display.height*0.16)">mdi-arrow-up-bold</v-icon></div>
           <div class="inst-text">
-            Control or "slide" time yourself!
+            New! Set time to "Now," or control time yourself!
           </div>
         </div>
         <div class="inst-quad bottom-right">
@@ -1510,6 +1515,20 @@
       </div>
       
       <div id="eclipse-percent-chip">
+        <v-btn
+          id="set-time-now-button"
+          variant="outlined"
+          rounded="xl"
+          :disabled="nowOutsideTimeRange"
+          :color="nowOutsideTimeRange ? 'gray' : '#eac402'"
+          @click="() => {
+            selectedTime = Math.max(minTime, Math.min(maxTime, Date.now()));
+            playbackRate=1;
+            playing=true;
+            }"
+        >
+          Now
+        </v-btn>
         <v-chip 
           v-if="!showNewMobileUI"
           :prepend-icon="smallSize ? `` : `mdi-sun-angle`"
@@ -1579,28 +1598,6 @@
                 faSize="1x"
                 :show-tooltip="!mobile"
               ></icon-button>
-              <icon-button
-              v-if="false"
-              id="set-time-now-button"
-              @activate="() => {
-                // selectedTime = times.reduce((a, b) => {
-                //   return Math.abs(b - Date.now()) < Math.abs(a - Date.now()) ? b : a;
-                // });
-                selectedTime = Date.now();
-                playbackRate=1;
-                playing = true;
-                console.log('to now')
-              }"
-              :color="accentColor"
-              tooltip-text="Go to current time"
-              tooltip-location="top"
-              tooltip-offset="5px"
-              :show-tooltip="!mobile"
-            >
-              <template v-slot:button>
-                Now
-              </template>
-            </icon-button>
               <icon-button
                 id="reset"
                 :fa-icon="'rotate'"
@@ -2075,7 +2072,7 @@ export default defineComponent({
     },
   },
   data() {
-    const _totalEclipseTimeUTC = new Date("2024-04-08T18:18:00Z");
+    const totalEclipseTimeUTC = new Date("2024-04-08T18:18:00Z");
 
     const sunPlace = new Place();
     sunPlace.set_names(["Sun"]);
@@ -2184,7 +2181,7 @@ export default defineComponent({
       pointerStartPosition: null as { x: number; y: number } | null,  
 
       // "Greatest Eclipse"
-      selectedTime:  _totalEclipseTimeUTC.getTime() - 60*60*1000*1.5,
+      selectedTime:  totalEclipseTimeUTC.getTime() - 60*60*1000*1.5,
       selectedTimezone: "America/Mexico_City",
       location,
       selectedLocationText: "Nazas, Mexico",
@@ -2247,10 +2244,11 @@ export default defineComponent({
       
       toggleTrackSun: true,
       
-      times: times, 
-      minTime: minTime,
-      maxTime: maxTime,
+      times,
+      minTime,
+      maxTime,
       millisecondsPerInterval: MILLISECONDS_PER_INTERVAL,
+      nowOutsideTimeRange: false,
       
       accentColor: "#eac402",
       moonColor: "#CFD8DC",
@@ -2342,6 +2340,10 @@ export default defineComponent({
   },
 
   mounted() {  
+
+    setInterval(() => {
+      this.nowOutsideTimeRange = Date.now() < this.minTime || Date.now() > this.maxTime;
+    }, 1000);
 
     if (queryData.latitudeDeg !== undefined && queryData.longitudeDeg !== undefined) {
       this.selectedTimezone = tzlookup(...[queryData.latitudeDeg, queryData.longitudeDeg]);
@@ -2887,6 +2889,7 @@ export default defineComponent({
         this.showNewMobileUI = !value;
       },
     },
+
   },
 
   methods: {
@@ -4211,7 +4214,7 @@ export default defineComponent({
     
     nearTotality(near: boolean, oldNear: boolean) {
       if (near) {
-        this.forceRate =  (Math.abs(this.playbackRate) > 10) && this.playing;
+        this.forceRate = (Math.abs(this.playbackRate) > 10) && this.playing;
       }
       
       // if leaving eclipse reset speed to previous
@@ -4834,6 +4837,16 @@ body {
     color: black;
     border-radius: 3px;
   }
+}
+
+#set-time-now-button {
+  // position: absolute;
+  // bottom: 15%;
+  // left: 5%;
+  margin-left: 3%;
+  background-color: black !important;
+  pointer-events: auto;
+  border: solid 2px;
 }
 
 .tool-container {
@@ -6227,8 +6240,8 @@ video, #info-video {
   // right: 0.5rem;
   // top: calc(-1.5 * var(--default-line-height));
     display: flex;
-    flex-direction: column;
-    gap: 0.5em;
+    width: 100%;
+    justify-content: space-between;
 
   .v-chip.v-chip--density-default {
     height: var(--default-line-height);
