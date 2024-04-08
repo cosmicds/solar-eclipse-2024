@@ -1536,7 +1536,11 @@
           <div style="position: relative">
             <v-btn
               :disabled="nowOutsideTimeRange"
-              @click="selectedTime = Math.max(minTime, Math.min(maxTime, Date.now()))"
+              @click="() => {
+                selectedTime = Math.max(minTime, Math.min(maxTime, Date.now()));
+                playbackRate=1;
+                playing=true;
+                }"
             >
               Now
             </v-btn>
