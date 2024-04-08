@@ -118,7 +118,7 @@ export default defineComponent({
 
     location: {
       type: Object as PropType<LocationDeg>,
-      default: () => {return {latitudeDeg: 42, longitudeDeg: -73};},
+      default: () => { return { latitudeDeg: 42, longitudeDeg: -73 }; },
       required: true
     },
 
@@ -266,7 +266,6 @@ export default defineComponent({
       return fetch(fullURL)
         .then(response => response.json())
         .then(data => {
-          console.log(data);
           this.forecast = data as Forecast;
         })
         .catch(error => {
