@@ -2073,7 +2073,7 @@ export default defineComponent({
     },
   },
   data() {
-    const _totalEclipseTimeUTC = new Date("2024-04-08T18:18:00Z");
+    const totalEclipseTimeUTC = new Date("2024-04-08T18:18:00Z");
 
     const sunPlace = new Place();
     sunPlace.set_names(["Sun"]);
@@ -2182,7 +2182,7 @@ export default defineComponent({
       pointerStartPosition: null as { x: number; y: number } | null,  
 
       // "Greatest Eclipse"
-      selectedTime:  _totalEclipseTimeUTC.getTime() - 60*60*1000*1.5,
+      selectedTime:  totalEclipseTimeUTC.getTime() - 60*60*1000*1.5,
       selectedTimezone: "America/Mexico_City",
       location,
       selectedLocationText: "Nazas, Mexico",
