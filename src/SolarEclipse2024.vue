@@ -1367,10 +1367,10 @@
                 tabindex="0"
               ></font-awesome-icon>
             <open-meteo-forecast 
-            :location="locationDeg"
-            :location-str="selectedLocationText" 
-            :timezone="selectedTimezone"
-            :time="(eclipsePrediction !== null && eclipseType != 'None') ? eclipsePrediction.maxTime[0] : null"
+              :location="locationDeg"
+              :location-str="selectedLocationText"
+              :timezone="selectedTimezone"
+              :time="(eclipsePrediction !== null && eclipseType != 'None') ? eclipsePrediction.maxTime[0] : null"
             />
           </v-card-text>
         </v-card>
