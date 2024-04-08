@@ -897,9 +897,12 @@
                 };
                 locationDeg = myLocation;
                 showMyLocationDialog = false;
-                $nextTick(() => {
-                  updateSelectedLocationText();
-                });
+                
+                if (myLocation.latitudeDeg !== locationDeg.latitudeDeg || myLocation.longitudeDeg !== locationDeg.longitudeDeg) {
+                  $nextTick(() => {
+                    updateSelectedLocationText();
+                  });
+                }
               }"
               @error="(error: GeolocationPositionError) => { 
                 $notify({
@@ -1371,10 +1374,10 @@
                 tabindex="0"
               ></font-awesome-icon>
             <open-meteo-forecast 
-            :location="locationDeg"
-            :location-str="selectedLocationText" 
-            :timezone="selectedTimezone"
-            :time="(eclipsePrediction !== null && eclipseType != 'None') ? eclipsePrediction.maxTime[0] : null"
+              :location="locationDeg"
+              :location-str="selectedLocationText"
+              :timezone="selectedTimezone"
+              :time="(eclipsePrediction !== null && eclipseType != 'None') ? eclipsePrediction.maxTime[0] : null"
             />
           </v-card-text>
         </v-card>
@@ -1984,7 +1987,7 @@ function parseEclipsePath(csv: string) {
     const eclipseDuration = d[18];
     // content for the popup : eclipse time (UTC) and duration
     const tz = tzlookup(centerLine.latitudeDeg, centerLine.longitudeDeg);
-    const localTimeString = formatInTimeZone(utc.getTime(), tz, "HH:mm (zzz)");
+    const localTimeString = formatInTimeZone(utc.getTime(), tz, "h:mm aa (zzz)");
     const popupContent = `Eclipse time (local): ${localTimeString} <br/>Eclipse time (UTC): ${d[1]} <br/>Duration: ${eclipseDuration}`;
     
     return {
@@ -2507,10 +2510,10 @@ export default defineComponent({
           ["A", "Annular"],
         ])).get(type);
         
-        // const maxTimeString = formatInTimeZone(maxTime[0], this.selectedTimezone, "HH:mm (zzz)");
+        // const maxTimeString = formatInTimeZone(maxTime[0], this.selectedTimezone, "h:mm aa (zzz)");
         
         if (type == "T") {
-          const begins = formatInTimeZone(this.eclipsePrediction.centralStart[0], this.selectedTimezone, "HH:mm:ss (zzz)");
+          const begins = formatInTimeZone(this.eclipsePrediction.centralStart[0], this.selectedTimezone, "h:mm:ss aa (zzz)");
           if (this.$vuetify.display.xs) {
             return `Totality starts: ${begins} Duration: ${spaceHMS(duration)}`;
           }
@@ -2520,7 +2523,7 @@ export default defineComponent({
 
         if (duration === '') {
           // get the duration of the partial eclipse
-          const starting = formatInTimeZone(this.eclipsePrediction.partialStart[0], this.selectedTimezone, "HH:mm (zzz)");
+          const starting = formatInTimeZone(this.eclipsePrediction.partialStart[0], this.selectedTimezone, "h:mm aa (zzz)");
           if (this.$vuetify.display.xs) {
             return `${typeString} starts: ${starting}`;
           }
@@ -3448,6 +3451,7 @@ export default defineComponent({
       this.weatherStartTimestamp = this.showAdvancedWeather ? now : null;
       this.weatherInfoStartTimestamp = this.weatherInfoOpen ? now : null;
       this.eclipseTimerStartTimestamp = this.showEclipsePredictionSheet ? now : null;
+      this.forecastInfoStartTimestamp = this.showForecastSheet ? now : null;
     },
 
     sendUpdateData() {

@@ -1230,10 +1230,17 @@ export default defineComponent({
         this.firstOpen = false;
         // this.displayData = false;
       }
+
+      if (value && (this.defaultLocation.latitudeDeg !== this.location.latitudeDeg || this.defaultLocation.longitudeDeg !== this.location.longitudeDeg)) {
+        this.location = this.defaultLocation;
+      }
     }, 
     
     defaultLocation(value: CityLocation) {
       console.log('defaultLocation', value);
+      if (!this.modelValue) {
+        return;
+      }
       // check if they are the same, if so do nothing
       if (value.latitudeDeg === this.location.latitudeDeg && value.longitudeDeg === this.location.longitudeDeg) {
         return;
@@ -1273,8 +1280,10 @@ export default defineComponent({
     },
     
     location(value: CityLocation, old: CityLocation) {
-      console.log('location', value);
       if (value.latitudeDeg === old.latitudeDeg && value.longitudeDeg === old.longitudeDeg) {
+        return;
+      }
+      if (!this.modelValue) {
         return;
       }
       if (
