@@ -262,7 +262,7 @@ export default defineComponent({
       }
       this.madeCall = true;
       const queryParams = new URLSearchParams(this.parameters);
-      const fullURL = `${this.openMeteoAPI}?${queryParams.toString()}&apikey=${process.env.OPENMETEO_API_KEY}`;
+      const fullURL = `${this.openMeteoAPI}?${queryParams.toString()}&apikey=${process.env.VUE_APP_OPENMETEO_API_KEY}`;
       return fetch(fullURL)
         .then(response => response.json())
         .then(data => {
