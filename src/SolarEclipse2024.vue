@@ -1510,6 +1510,20 @@
       </div>
       
       <div id="eclipse-percent-chip">
+        <v-btn
+          id="set-time-now-button"
+          variant="outlined"
+          rounded="xl"
+          :disabled="nowOutsideTimeRange"
+          :color="nowOutsideTimeRange ? 'gray' : '#eac402'"
+          @click="() => {
+            selectedTime = Math.max(minTime, Math.min(maxTime, Date.now()));
+            playbackRate=1;
+            playing=true;
+            }"
+        >
+          Now
+        </v-btn>
         <v-chip 
           v-if="!showNewMobileUI"
           :prepend-icon="smallSize ? `` : `mdi-sun-angle`"
@@ -1534,16 +1548,6 @@
       <div id="tools">
         <span class="tool-container">
           <div style="position: relative">
-            <v-btn
-              :disabled="nowOutsideTimeRange"
-              @click="() => {
-                selectedTime = Math.max(minTime, Math.min(maxTime, Date.now()));
-                playbackRate=1;
-                playing=true;
-                }"
-            >
-              Now
-            </v-btn>
             <div id="speed-control">
               <icon-button
                 id="reverse-speed"
@@ -1589,28 +1593,6 @@
                 faSize="1x"
                 :show-tooltip="!mobile"
               ></icon-button>
-              <icon-button
-              v-if="false"
-              id="set-time-now-button"
-              @activate="() => {
-                // selectedTime = times.reduce((a, b) => {
-                //   return Math.abs(b - Date.now()) < Math.abs(a - Date.now()) ? b : a;
-                // });
-                selectedTime = Date.now();
-                playbackRate=1;
-                playing = true;
-                console.log('to now')
-              }"
-              :color="accentColor"
-              tooltip-text="Go to current time"
-              tooltip-location="top"
-              tooltip-offset="5px"
-              :show-tooltip="!mobile"
-            >
-              <template v-slot:button>
-                Now
-              </template>
-            </icon-button>
               <icon-button
                 id="reset"
                 :fa-icon="'rotate'"
@@ -4851,6 +4833,16 @@ body {
   }
 }
 
+#set-time-now-button {
+  // position: absolute;
+  // bottom: 15%;
+  // left: 5%;
+  margin-left: 3%;
+  background-color: black !important;
+  pointer-events: auto;
+  border: solid 2px;
+}
+
 .tool-container {
   display: flex;
   width: 99%;
@@ -6242,8 +6234,8 @@ video, #info-video {
   // right: 0.5rem;
   // top: calc(-1.5 * var(--default-line-height));
     display: flex;
-    flex-direction: column;
-    gap: 0.5em;
+    width: 100%;
+    justify-content: space-between;
 
   .v-chip.v-chip--density-default {
     height: var(--default-line-height);
