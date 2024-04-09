@@ -1096,7 +1096,7 @@
         </div>
         <div v-else>
           <p class="splash-small-text">
-            <v-icon icon="mdi-creation" size="small" class="bullet-icon"></v-icon> New! April 8 weather forecast
+            <v-icon icon="mdi-creation" size="small" class="bullet-icon"></v-icon> New! NOW button, active starting at 6:40am EDT
           </p>
         </div>
 
@@ -1160,7 +1160,7 @@
         <div class="inst-quad bottom-left">
           <div class="inst-arrow"><v-icon  class="the-arrow" :color="accentColor" :size="Math.min($vuetify.display.width*0.16,$vuetify.display.height*0.16)">mdi-arrow-up-bold</v-icon></div>
           <div class="inst-text">
-            Control or "slide" time yourself!
+            New! Set time to "Now," or control time yourself!
           </div>
         </div>
         <div class="inst-quad bottom-right">
