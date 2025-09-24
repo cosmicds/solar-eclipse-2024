@@ -1757,7 +1757,9 @@
         </span>      
       </div>
       <div id="body-logos" v-if= "!smallSize">
-        <credit-logos/>
+        <credit-logos
+          :default-logos="['cosmicds', 'wwt', 'sciact', 'nasa-grantee']"
+        />
       </div>
     </div>
 
