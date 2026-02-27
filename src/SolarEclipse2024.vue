@@ -1998,6 +1998,7 @@ type QueryData = OptionalFieldsShallow<LocationDeg & { splash: boolean } & {awv:
 let queryData: QueryData = {};
 const UUID_KEY = "eclipse-mini-uuid" as const;
 const OPT_OUT_KEY = "eclipse-mini-optout" as const;
+const RATING_OPT_OUT_KEY = "eclipse-mini-rating-optout" as const;
 
 const RELEVANT_FEATURE_TYPES = ["postcode", "place", "region", "country"];
 const NA_COUNTRIES = ["United States", "Canada", "Mexico"];
@@ -2176,6 +2177,10 @@ export default defineComponent({
     
     const storedOptOut = window.localStorage.getItem(OPT_OUT_KEY);
     const responseOptOut = typeof storedOptOut === "string" ? storedOptOut === "true" : null;
+
+    const storedRatingOptOut = window.localStorage.getItem(RATING_OPT_OUT_KEY);
+    const ratingOptOut = typeof storedRatingOptOut === "string" ? storedRatingOptOut === "true" : null;
+
     const location: LocationRad = (latitudeDeg !== undefined && longitudeDeg !== undefined) ?
       { latitudeRad: D2R * latitudeDeg, longitudeRad: D2R * longitudeDeg } :
       { latitudeRad: D2R * 25.2866667, longitudeRad: D2R * -104.1383333 };
@@ -2187,6 +2192,9 @@ export default defineComponent({
 
       showRating: false,
       storyRatingUrl: `${API_BASE_URL}/solar-eclipse-2024/user-experience`,
+
+      // If the user has opted out of all data collection, don't ask them the question
+      ratingOptOut: responseOptOut || ratingOptOut,  
       uuid,
       currentRating: null as UserExperienceRating | null,
       currentComments: null as string | null,
@@ -2981,6 +2989,13 @@ export default defineComponent({
 
   methods: {
 
+    clearQuestionTimeout() {
+      if (this.questionTimeout !== null) {
+        clearTimeout(this.questionTimeout);
+        this.questionTimeout = null;
+      }
+    },
+
     updateUserExperienceInfo(rating: UserExperienceRating | null, comments: string | null) {
       const body: Record<string, unknown> = {
         uuid: this.uuid,
@@ -3542,24 +3557,27 @@ export default defineComponent({
         });
       }
 
-      let questionAnswered = false;
+      if (this.ratingOptOut) {
+        return;
+      }
+
+      let gaveRating = false;
       if (userExists) {
-        const questionResponse = await fetch(`${this.storyRatingUrl}/${this.uuid}`, {
+        const ratingResponse = await fetch(`${this.storyRatingUrl}/${this.uuid}`, {
           method: "GET",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           headers: { "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "" }
         });
 
-        const questionContent = await questionResponse.json();
-        questionAnswered = questionResponse.status === 200 && questionContent.ratings?.length > 0;
+        const ratingContent = await ratingResponse.json();
+        gaveRating = ratingResponse.status === 200 && ratingContent.ratings?.length > 0;
       }
 
-      if (!questionAnswered) {
+      if (!gaveRating) {
         this.questionTimeout = setTimeout(() => {
           this.showRating = true;
         }, 90_000);
       }
-
     },
 
     resetData() {
@@ -4306,9 +4324,16 @@ export default defineComponent({
     
     responseOptOut(optOut: boolean) {
       window.localStorage.setItem(OPT_OUT_KEY, String(optOut));
-      if (optOut && this.questionTimeout !== null) {
-        clearTimeout(this.questionTimeout);
-        this.questionTimeout = null;
+      if (optOut) {
+        this.ratingOptOut = true;
+        this.clearQuestionTimeout();
+      }
+    },
+
+    ratingOptOut(optOut: boolean) {
+      window.localStorage.setItem(RATING_OPT_OUT_KEY, String(optOut));
+      if (optOut) {
+        this.clearQuestionTimeout();
       }
     },
 
