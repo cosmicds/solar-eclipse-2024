@@ -1833,12 +1833,50 @@
   <notifications group="copy-url" position="center top" classes="url-notification"/>
   <notifications dangerouslySetInnerHtml group="geolocation-error" position="center top" />
   </div>
+
+  <v-container>
+    <v-expand-transition>
+      <user-experience
+        v-if="showRating"
+        :question="question"
+        icon-size="3x"
+        @dismiss="(_rating: UserExperienceRating | null, _comments: string | null) => {
+          showRating = false;
+        }"
+        @rating="(rating: UserExperienceRating | null) => {
+          currentRating = rating;
+          updateUserExperienceInfo(currentRating, currentComments);
+        }"
+        @finish="(rating: UserExperienceRating | null, comments: string | null) => {
+          currentRating = rating;
+          currentComments = comments;
+          updateUserExperienceInfo(currentRating, currentComments);
+          showRating = false;
+        }"
+      >
+        <template #footer>
+          <v-btn
+            class="privacy-button"
+            color="#BDBDBD"
+            @click="showPrivacyDialog = true"
+            size="small"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="text"
+          >
+          What is this?
+          </v-btn>
+        </template>
+      </user-experience>
+    </v-expand-transition>
+    <cds-privacy-policy v-model="showPrivacyDialog" />
+  </v-container>
 </v-app>
 </template>
 
 <script lang="ts">
 import { defineComponent, toRaw, PropType } from "vue";
-import { MiniDSBase, BackgroundImageset, skyBackgroundImagesets, API_BASE_URL } from "@cosmicds/vue-toolkit";
+import { MiniDSBase, BackgroundImageset, skyBackgroundImagesets, API_BASE_URL, UserExperienceRating } from "@cosmicds/vue-toolkit";
 import { GotoRADecZoomParams } from "@wwtelescope/engine-pinia";
 import { Classification, SolarSystemObjects } from "@wwtelescope/engine-types";
 import { Folder, Grids, LayerManager, Planets, Poly, Settings, WWTControl, Place, Texture, CAAMoon } from "@wwtelescope/engine";
@@ -2143,14 +2181,23 @@ export default defineComponent({
       { latitudeRad: D2R * 25.2866667, longitudeRad: D2R * -104.1383333 };
     return {
       showWebGL2Warning: false,
-      
+
       showNewMobileUI: false,
       showForecastSheet: false,
+
+      showRating: false,
+      storyRatingUrl: `${API_BASE_URL}/solar-eclipse-2024/user-experience`,
+      uuid,
+      currentRating: null as UserExperienceRating | null,
+      currentComments: null as string | null,
+      question: Math.random() > 0.5 ? 
+        "Does this spark your curiosity?" :
+        "Are you learning something new?",
+      questionTimeout: null as ReturnType<typeof setTimeout> | null,
       
       selectedCloudCoverVariable: 'median', // Define selectedCloudCoverVariable
       cloudCoverData: cloudDataArray as CloudData[],
       
-      uuid,
       infoTimeMs: 0,
       userGuideTimeMs: 0,
       weatherTimeMs: 0,
@@ -2933,6 +2980,30 @@ export default defineComponent({
   },
 
   methods: {
+
+    updateUserExperienceInfo(rating: UserExperienceRating | null, comments: string | null) {
+      const body: Record<string, unknown> = {
+        uuid: this.uuid,
+        question: this.question,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        story_name: "solar-eclipse-2024",
+      };
+      if (rating) {
+        body.rating = rating;
+      }
+      if (comments) {
+        body.comments = comments;
+      }
+      fetch(this.storyRatingUrl, {
+        method: "PUT",
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+    },
     
     pauseForOverlay() {
       const increment = this.playing  || this.playingWaitCount > 0;
@@ -3442,34 +3513,53 @@ export default defineComponent({
         headers: { "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "" }
       });
       const content = await response.json();
-      const exists = response.status === 200 && content.response?.user_uuid != undefined;
-      if (exists) {
-        return;
+      const userExists = response.status === 200 && content.response?.user_uuid != undefined;
+
+      if (!userExists) {
+        fetch(`${API_BASE_URL}/solar-eclipse-2024/data`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            "Authorization": process.env.VUE_APP_CDS_API_KEY ?? ""
+          },
+          body: JSON.stringify({
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            user_uuid: this.uuid, 
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            user_selected_locations: toRaw(this.userSelectedLocations),
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            cloud_cover_selected_locations: toRaw(this.cloudCoverSelectedLocations),
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            text_search_selected_locations: toRaw(this.textSearchSelectedLocations),
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            info_time_ms: 0, app_time_ms: 0, user_guide_time_ms: 0, forecast_info_time_ms: 0,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            advanced_weather_selected_locations_count: this.advancedWeatherSelectedCount,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            cloud_cover_selected_locations_count: this.cloudCoverSelectedCount,
+          })
+        });
       }
-      fetch(`${API_BASE_URL}/solar-eclipse-2024/data`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+
+      let questionAnswered = false;
+      if (userExists) {
+        const questionResponse = await fetch(`${this.storyRatingUrl}/${this.uuid}`, {
+          method: "GET",
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          "Authorization": process.env.VUE_APP_CDS_API_KEY ?? ""
-        },
-        body: JSON.stringify({
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          user_uuid: this.uuid, 
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          user_selected_locations: toRaw(this.userSelectedLocations),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          cloud_cover_selected_locations: toRaw(this.cloudCoverSelectedLocations),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          text_search_selected_locations: toRaw(this.textSearchSelectedLocations),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          info_time_ms: 0, app_time_ms: 0, user_guide_time_ms: 0, forecast_info_time_ms: 0,
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          advanced_weather_selected_locations_count: this.advancedWeatherSelectedCount,
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          cloud_cover_selected_locations_count: this.cloudCoverSelectedCount,
-        })
-      });
+          headers: { "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "" }
+        });
+
+        const questionContent = await questionResponse.json();
+        questionAnswered = questionResponse.status === 200 && questionContent.ratings?.length > 0;
+      }
+
+      if (!questionAnswered) {
+        this.questionTimeout = setTimeout(() => {
+          this.showRating = true;
+        }, 90_000);
+      }
+
     },
 
     resetData() {
@@ -4216,6 +4306,10 @@ export default defineComponent({
     
     responseOptOut(optOut: boolean) {
       window.localStorage.setItem(OPT_OUT_KEY, String(optOut));
+      if (optOut && this.questionTimeout !== null) {
+        clearTimeout(this.questionTimeout);
+        this.questionTimeout = null;
+      }
     },
 
     inIntro(value: boolean) {
