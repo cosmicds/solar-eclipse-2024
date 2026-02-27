@@ -1836,6 +1836,7 @@
 
   <v-expand-transition>
     <user-experience
+      v-if="showRating"
       :question="question"
       icon-size="3x"
       @dismiss="(_rating: UserExperienceRating | null, _comments: string | null) => {
