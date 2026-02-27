@@ -1834,43 +1834,42 @@
   <notifications dangerouslySetInnerHtml group="geolocation-error" position="center top" />
   </div>
 
-  <v-container>
-    <v-expand-transition>
-      <user-experience
-        v-if="showRating"
-        :question="question"
-        icon-size="3x"
-        @dismiss="(_rating: UserExperienceRating | null, _comments: string | null) => {
-          showRating = false;
-        }"
-        @rating="(rating: UserExperienceRating | null) => {
-          currentRating = rating;
-          updateUserExperienceInfo(currentRating, currentComments);
-        }"
-        @finish="(rating: UserExperienceRating | null, comments: string | null) => {
-          currentRating = rating;
-          currentComments = comments;
-          updateUserExperienceInfo(currentRating, currentComments);
-          showRating = false;
-        }"
-      >
-        <template #footer>
+  <v-expand-transition>
+    <user-experience
+      :question="question"
+      icon-size="3x"
+      @dismiss="(_rating: UserExperienceRating | null, _comments: string | null) => {
+        showRating = false;
+      }"
+      @rating="(rating: UserExperienceRating | null) => {
+        currentRating = rating;
+        updateUserExperienceInfo(currentRating, currentComments);
+      }"
+      @finish="(rating: UserExperienceRating | null, comments: string | null) => {
+        currentRating = rating;
+        currentComments = comments;
+        updateUserExperienceInfo(currentRating, currentComments);
+        showRating = false;
+      }"
+    >
+      <template #footer>
+        <div id="user-experience-footer">
           <v-btn
-            class="privacy-button"
+            class="rating-opt-put"
             color="#BDBDBD"
-            @click="showPrivacyDialog = true"
             size="small"
-            target="_blank"
-            rel="noopener noreferrer"
             variant="text"
+            @click="() => {
+              showRating = false;
+              ratingOptOut = true;
+            }"
           >
-          What is this?
+          Don't show again
           </v-btn>
-        </template>
-      </user-experience>
-    </v-expand-transition>
-    <cds-privacy-policy v-model="showPrivacyDialog" />
-  </v-container>
+        </div>
+      </template>
+    </user-experience>
+  </v-expand-transition>
 </v-app>
 </template>
 
@@ -6704,5 +6703,60 @@ a {
   border: 1px solid var(--accent-color);
   text-align: center;
   border-radius: 10px;
+}
+
+.rating-root {
+  position: absolute !important;
+  right: 5px;
+  bottom: 0;
+  padding: 5px;
+  width: fit-content !important;
+  // left: 50%;
+  // transform: translateX(-50%);
+  gap: 0 !important;
+  border: solid 1px #EFEFEF !important;
+  border-radius: 10px !important;
+  background-color: #222222 !important;
+  opacity: 0.95 !important;
+  z-index: 20000;
+
+  .rating-title {
+    color: #EFEFEF;
+    font-size: var(--default-font-size);
+  }
+
+  .rating-icon-row {
+    
+    padding: 0px;
+
+    .svg-inline--fa {
+      height: 30px;
+    }
+  }
+
+  .comments-box {
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .v-card-text {
+    padding-bottom: 0;
+  }
+
+  .v-card-actions {
+    padding: 0;
+  }
+
+  #user-experience-footer {
+    margin: auto;
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+  }
+
+  .close-button {
+    position: absolute !important;
+    color: white !important;
+  }
 }
 </style>
