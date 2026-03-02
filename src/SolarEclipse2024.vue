@@ -1867,10 +1867,22 @@
           >
           Don't show again
           </v-btn>
+          <v-btn
+            class="privacy-button"
+            color="#BDBDBD"
+            @click="showRatingPrivacyPolicy = true"
+            @keyup.enter="showRatingPrivacyPolicy = true"
+            size="small"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+          What is this?
+          </v-btn>
         </div>
       </template>
     </user-experience>
   </v-expand-transition>
+  <cds-privacy-policy v-model="showRatingPrivacyPolicy" />
 </v-app>
 </template>
 
@@ -2343,6 +2355,7 @@ export default defineComponent({
 
       showPrivacyDialog: false,
       showMyLocationDialog: false,
+      showRatingPrivacyPolicy: false,
 
       tab: 0,
       infoPage: 1,

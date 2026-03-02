@@ -20,6 +20,7 @@ import EclipseTimer from "./EclipseTimer.vue";
 import LocationSearch from "./LocationSearch.vue";
 import ArrowSVG from "./ArrowSVG.vue";
 import OpenMeteoForecast from "./OpenMeteoForecast.vue";
+import CDSPrivacyPolicy from "./CDSPrivacyPolicy.vue";
 
 import "./polyfills";
 
@@ -166,6 +167,7 @@ createApp(SolarEclipse2023, {
   .component('arrow-svg', ArrowSVG)
   .component('open-meteo-forecast', OpenMeteoForecast)
   .component('user-experience', UserExperience)
+  .component('cds-privacy-policy', CDSPrivacyPolicy)
 
   // Mount
   .mount("#app");
