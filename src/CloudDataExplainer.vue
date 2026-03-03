@@ -55,26 +55,28 @@
               <p>
                 We group the percent cloud cover based on the <a href="https://www.weather.gov/mrx/pfm_explain" target="_blank">bins</a> from the National Weather Service:
                 <table>
-                  <tr>
-                    <th>Percentage</th>
-                    <th>Cloud Cover</th>
-                  </tr>
-                  <tr>
-                    <td>0-25%</td>
-                    <td>Clear</td>
-                  </tr>
-                  <tr>
-                    <td>25-50%</td>
-                    <td>Partly Cloudy</td>
-                  </tr>
-                  <tr>
-                    <td>51-87%</td>
-                    <td>Mostly Cloudy</td>
-                  </tr>
-                  <tr>
-                    <td>88-100%</td>
-                    <td>Cloudy / Overcast</td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <th>Percentage</th>
+                      <th>Cloud Cover</th>
+                    </tr>
+                    <tr>
+                      <td>0-25%</td>
+                      <td>Clear</td>
+                    </tr>
+                    <tr>
+                      <td>25-50%</td>
+                      <td>Partly Cloudy</td>
+                    </tr>
+                    <tr>
+                      <td>51-87%</td>
+                      <td>Mostly Cloudy</td>
+                    </tr>
+                    <tr>
+                      <td>88-100%</td>
+                      <td>Cloudy / Overcast</td>
+                    </tr>
+                  </tbody>
                 </table>
               </p>
 
@@ -165,18 +167,20 @@
               </p>
               <p> For the years included in our data set, they classify them as follows:
               <table>
-                <tr>
-                  <td> <strong>El Niño</strong>: </td>
-                  <td>2003, 2007, 2010, 2016</td>
-                </tr>
-                <tr>
-                  <td> <strong>Neutral</strong>: </td>
-                  <td>2004, 2005, 2006, 2009, 2013, 2014, 2015, 2017, 2018</td>
-                </tr>
-                <tr>
-                  <td> <strong>La Niña</strong>: </td>
-                  <td>2008, 2011, 2012, 2021, 2022, 2023</td>
-                </tr>
+                <tbody>
+                  <tr>
+                    <td> <strong>El Niño</strong>: </td>
+                    <td>2003, 2007, 2010, 2016</td>
+                  </tr>
+                  <tr>
+                    <td> <strong>Neutral</strong>: </td>
+                    <td>2004, 2005, 2006, 2009, 2013, 2014, 2015, 2017, 2018</td>
+                  </tr>
+                  <tr>
+                    <td> <strong>La Niña</strong>: </td>
+                    <td>2008, 2011, 2012, 2021, 2022, 2023</td>
+                  </tr>
+                </tbody>
               </table>
             </p>
               <p>
