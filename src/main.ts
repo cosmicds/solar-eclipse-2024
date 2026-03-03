@@ -2,7 +2,7 @@ import Vue, { createApp } from "vue";
 
 import { CreditLogos, IconButton } from "@cosmicds/vue-toolkit";
 import LocationSelector from "./LocationSelector.vue";
-import { FundingAcknowledgment } from "@cosmicds/vue-toolkit";
+import { FundingAcknowledgment, UserExperience } from "@cosmicds/vue-toolkit";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import SolarEclipse2023 from "./SolarEclipse2024.vue";
 import TransitionExpand from "./TransitionExpand.vue";
@@ -20,6 +20,7 @@ import EclipseTimer from "./EclipseTimer.vue";
 import LocationSearch from "./LocationSearch.vue";
 import ArrowSVG from "./ArrowSVG.vue";
 import OpenMeteoForecast from "./OpenMeteoForecast.vue";
+import CDSPrivacyPolicy from "./CDSPrivacyPolicy.vue";
 
 import "./polyfills";
 
@@ -165,5 +166,8 @@ createApp(SolarEclipse2023, {
   .component('location-search', LocationSearch)
   .component('arrow-svg', ArrowSVG)
   .component('open-meteo-forecast', OpenMeteoForecast)
+  .component('user-experience', UserExperience)
+  .component('cds-privacy-policy', CDSPrivacyPolicy)
+
   // Mount
   .mount("#app");

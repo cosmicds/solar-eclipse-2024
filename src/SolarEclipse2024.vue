@@ -1833,12 +1833,62 @@
   <notifications group="copy-url" position="center top" classes="url-notification"/>
   <notifications dangerouslySetInnerHtml group="geolocation-error" position="center top" />
   </div>
+
+  <v-expand-transition>
+    <user-experience
+      v-if="showRating"
+      :question="question"
+      icon-size="3x"
+      @dismiss="(_rating: UserExperienceRating | null, _comments: string | null) => {
+        showRating = false;
+      }"
+      @rating="(rating: UserExperienceRating | null) => {
+        currentRating = rating;
+        updateUserExperienceInfo(currentRating, currentComments);
+      }"
+      @finish="(rating: UserExperienceRating | null, comments: string | null) => {
+        currentRating = rating;
+        currentComments = comments;
+        updateUserExperienceInfo(currentRating, currentComments);
+        showRating = false;
+      }"
+    >
+      <template #footer>
+        <div id="user-experience-footer">
+          <v-btn
+            class="rating-opt-put"
+            color="#BDBDBD"
+            size="small"
+            variant="text"
+            @click="() => {
+              showRating = false;
+              ratingOptOut = true;
+            }"
+          >
+          Don't show again
+          </v-btn>
+          <v-btn
+            class="privacy-button"
+            color="#BDBDBD"
+            @click="showRatingPrivacyPolicy = true"
+            @keyup.enter="showRatingPrivacyPolicy = true"
+            size="small"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+          What is this?
+          </v-btn>
+        </div>
+      </template>
+    </user-experience>
+  </v-expand-transition>
+  <cds-privacy-policy v-model="showRatingPrivacyPolicy" />
 </v-app>
 </template>
 
 <script lang="ts">
 import { defineComponent, toRaw, PropType } from "vue";
-import { MiniDSBase, BackgroundImageset, skyBackgroundImagesets, API_BASE_URL } from "@cosmicds/vue-toolkit";
+import { MiniDSBase, BackgroundImageset, skyBackgroundImagesets, API_BASE_URL, UserExperienceRating } from "@cosmicds/vue-toolkit";
 import { GotoRADecZoomParams } from "@wwtelescope/engine-pinia";
 import { Classification, SolarSystemObjects } from "@wwtelescope/engine-types";
 import { Folder, Grids, LayerManager, Planets, Poly, Settings, WWTControl, Place, Texture, CAAMoon } from "@wwtelescope/engine";
@@ -1960,6 +2010,7 @@ type QueryData = OptionalFieldsShallow<LocationDeg & { splash: boolean } & {awv:
 let queryData: QueryData = {};
 const UUID_KEY = "eclipse-mini-uuid" as const;
 const OPT_OUT_KEY = "eclipse-mini-optout" as const;
+const RATING_OPT_OUT_KEY = "eclipse-mini-rating-optout" as const;
 
 const RELEVANT_FEATURE_TYPES = ["postcode", "place", "region", "country"];
 const NA_COUNTRIES = ["United States", "Canada", "Mexico"];
@@ -2138,19 +2189,35 @@ export default defineComponent({
     
     const storedOptOut = window.localStorage.getItem(OPT_OUT_KEY);
     const responseOptOut = typeof storedOptOut === "string" ? storedOptOut === "true" : null;
+
+    const storedRatingOptOut = window.localStorage.getItem(RATING_OPT_OUT_KEY);
+    const ratingOptOut = typeof storedRatingOptOut === "string" ? storedRatingOptOut === "true" : null;
+
     const location: LocationRad = (latitudeDeg !== undefined && longitudeDeg !== undefined) ?
       { latitudeRad: D2R * latitudeDeg, longitudeRad: D2R * longitudeDeg } :
       { latitudeRad: D2R * 25.2866667, longitudeRad: D2R * -104.1383333 };
     return {
       showWebGL2Warning: false,
-      
+
       showNewMobileUI: false,
       showForecastSheet: false,
+
+      showRating: false,
+      storyRatingUrl: `${API_BASE_URL}/solar-eclipse-2024/user-experience`,
+
+      // If the user has opted out of all data collection, don't ask them the question
+      ratingOptOut: responseOptOut || ratingOptOut,  
+      uuid,
+      currentRating: null as UserExperienceRating | null,
+      currentComments: null as string | null,
+      question: Math.random() > 0.5 ? 
+        "Does this spark your curiosity?" :
+        "Are you learning something new?",
+      questionTimeout: null as ReturnType<typeof setTimeout> | null,
       
       selectedCloudCoverVariable: 'median', // Define selectedCloudCoverVariable
       cloudCoverData: cloudDataArray as CloudData[],
       
-      uuid,
       infoTimeMs: 0,
       userGuideTimeMs: 0,
       weatherTimeMs: 0,
@@ -2288,6 +2355,7 @@ export default defineComponent({
 
       showPrivacyDialog: false,
       showMyLocationDialog: false,
+      showRatingPrivacyPolicy: false,
 
       tab: 0,
       infoPage: 1,
@@ -2933,6 +3001,37 @@ export default defineComponent({
   },
 
   methods: {
+
+    clearQuestionTimeout() {
+      if (this.questionTimeout !== null) {
+        clearTimeout(this.questionTimeout);
+        this.questionTimeout = null;
+      }
+    },
+
+    updateUserExperienceInfo(rating: UserExperienceRating | null, comments: string | null) {
+      const body: Record<string, unknown> = {
+        uuid: this.uuid,
+        question: this.question,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        story_name: "solar-eclipse-2024",
+      };
+      if (rating) {
+        body.rating = rating;
+      }
+      if (comments) {
+        body.comments = comments;
+      }
+      fetch(this.storyRatingUrl, {
+        method: "PUT",
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+    },
     
     pauseForOverlay() {
       const increment = this.playing  || this.playingWaitCount > 0;
@@ -3442,34 +3541,56 @@ export default defineComponent({
         headers: { "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "" }
       });
       const content = await response.json();
-      const exists = response.status === 200 && content.response?.user_uuid != undefined;
-      if (exists) {
+      const userExists = response.status === 200 && content.response?.user_uuid != undefined;
+
+      if (!userExists) {
+        fetch(`${API_BASE_URL}/solar-eclipse-2024/data`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            "Authorization": process.env.VUE_APP_CDS_API_KEY ?? ""
+          },
+          body: JSON.stringify({
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            user_uuid: this.uuid, 
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            user_selected_locations: toRaw(this.userSelectedLocations),
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            cloud_cover_selected_locations: toRaw(this.cloudCoverSelectedLocations),
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            text_search_selected_locations: toRaw(this.textSearchSelectedLocations),
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            info_time_ms: 0, app_time_ms: 0, user_guide_time_ms: 0, forecast_info_time_ms: 0,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            advanced_weather_selected_locations_count: this.advancedWeatherSelectedCount,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            cloud_cover_selected_locations_count: this.cloudCoverSelectedCount,
+          })
+        });
+      }
+
+      if (this.ratingOptOut) {
         return;
       }
-      fetch(`${API_BASE_URL}/solar-eclipse-2024/data`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+
+      let gaveRating = false;
+      if (userExists) {
+        const ratingResponse = await fetch(`${this.storyRatingUrl}/${this.uuid}`, {
+          method: "GET",
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          "Authorization": process.env.VUE_APP_CDS_API_KEY ?? ""
-        },
-        body: JSON.stringify({
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          user_uuid: this.uuid, 
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          user_selected_locations: toRaw(this.userSelectedLocations),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          cloud_cover_selected_locations: toRaw(this.cloudCoverSelectedLocations),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          text_search_selected_locations: toRaw(this.textSearchSelectedLocations),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          info_time_ms: 0, app_time_ms: 0, user_guide_time_ms: 0, forecast_info_time_ms: 0,
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          advanced_weather_selected_locations_count: this.advancedWeatherSelectedCount,
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          cloud_cover_selected_locations_count: this.cloudCoverSelectedCount,
-        })
-      });
+          headers: { "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "" }
+        });
+
+        const ratingContent = await ratingResponse.json();
+        gaveRating = ratingResponse.status === 200 && ratingContent.ratings?.length > 0;
+      }
+
+      if (!gaveRating) {
+        this.questionTimeout = setTimeout(() => {
+          this.showRating = true;
+        }, 90_000);
+      }
     },
 
     resetData() {
@@ -4216,6 +4337,17 @@ export default defineComponent({
     
     responseOptOut(optOut: boolean) {
       window.localStorage.setItem(OPT_OUT_KEY, String(optOut));
+      if (optOut) {
+        this.ratingOptOut = true;
+        this.clearQuestionTimeout();
+      }
+    },
+
+    ratingOptOut(optOut: boolean) {
+      window.localStorage.setItem(RATING_OPT_OUT_KEY, String(optOut));
+      if (optOut) {
+        this.clearQuestionTimeout();
+      }
     },
 
     inIntro(value: boolean) {
@@ -6585,5 +6717,60 @@ a {
   border: 1px solid var(--accent-color);
   text-align: center;
   border-radius: 10px;
+}
+
+.rating-root {
+  position: absolute !important;
+  right: 5px;
+  bottom: 0;
+  padding: 5px;
+  width: fit-content !important;
+  // left: 50%;
+  // transform: translateX(-50%);
+  gap: 0 !important;
+  border: solid 1px #EFEFEF !important;
+  border-radius: 10px !important;
+  background-color: #222222 !important;
+  opacity: 0.95 !important;
+  z-index: 20000;
+
+  .rating-title {
+    color: #EFEFEF;
+    font-size: var(--default-font-size);
+  }
+
+  .rating-icon-row {
+    
+    padding: 0px;
+
+    .svg-inline--fa {
+      height: 30px;
+    }
+  }
+
+  .comments-box {
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .v-card-text {
+    padding-bottom: 0;
+  }
+
+  .v-card-actions {
+    padding: 0;
+  }
+
+  #user-experience-footer {
+    margin: auto;
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+  }
+
+  .close-button {
+    position: absolute !important;
+    color: white !important;
+  }
 }
 </style>
