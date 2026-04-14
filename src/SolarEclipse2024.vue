@@ -3589,7 +3589,7 @@ export default defineComponent({
       if (!gaveRating) {
         this.questionTimeout = setTimeout(() => {
           this.showRating = true;
-        }, 90_000);
+        }, 60_000);
       }
     },
 
